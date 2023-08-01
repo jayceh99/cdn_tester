@@ -59,7 +59,7 @@ class cdn_tester:
                 download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')+" Mbps"
 
             return httping_ms , download_speed
-        except Exception as e:
+        except :
             return "Test Failed" , "Test Failed"
         
 
@@ -80,13 +80,15 @@ def get_client_info():
     txt = os.popen('ipconfig/all').read()
 
     dns_result = re.search(re_pattern_dns, txt)
-    if dns_result:
+
+    if dns_result != None:
         dns_result = dns_result.group(1)
     else:
         dns_result = 'not found'
 
     ip_result = re.search(re_pattern_ipv4, txt)
-    if ip_result:
+
+    if ip_result != None:
         ip_result = ip_result.group(1)
     else:
         ip_result = 'not found'
