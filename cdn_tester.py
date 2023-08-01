@@ -10,7 +10,7 @@ class cdn_tester:
         self.domain = domain
         self.dns = dns_name
         self.requests_target = requests_target
-        os.popen('netsh interface ip set dnsservers "乙太網路" static '+self.dns+' primary')
+        os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
         #time.sleep(1)
 
     def dns_get_server_ip(self):
@@ -26,7 +26,7 @@ class cdn_tester:
     
     def get_server_location(self , ip):
         try:
-            j = open(r'E:\下載\cdn-tester-20230731T040049Z-001\cdn-tester\ip_list.json','r',encoding='UTF-8')
+            j = open(r'C:\Users\jayce\Desktop\cdn_tester\ip_list.json','r',encoding='UTF-8')
             j = json.loads(j.read())
             location = '('+j[ip]+')'
             
@@ -45,7 +45,7 @@ class cdn_tester:
                 return "Test Failed" , "Test Failed"
             else:
                 use_time = end_time - start_time
-                download_speed = format(int(r.headers.get("Content-Length")) / 1024 / 1024 / use_time , '.2f')
+                download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')
                 return str(int(((use_time)*1000))) +' ms' , str(download_speed) + ' Mbps'
         except Exception as e:
             return "Test Failed" , "Test Failed"
@@ -81,12 +81,12 @@ def get_client_info():
     return ip_result , dns_result
         
 def main():
-      
-    j = open(r'E:\下載\cdn-tester-20230731T040049Z-001\cdn-tester\config.json','r')
+    os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
+    j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
-    os.popen('netsh interface ip set dnsservers "乙太網路"  dhcp')
+    time.sleep(1)
     client_ip , dns_ip = get_client_info()
     print("default DNS is " , dns_ip)
     for dns_name in j['dns'] :
@@ -97,6 +97,7 @@ def main():
         httping , download_speed = cdn_tester_q.httping()
         get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
                                                 httping=httping , download_speed = download_speed)
+        time.sleep(1)
         del  dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
     del j , domain , requests_target
 
