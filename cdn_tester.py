@@ -11,7 +11,7 @@ class cdn_tester:
         self.dns = dns_name
         self.requests_target = requests_target
         os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
-        #time.sleep(1)
+        time.sleep(3)
 
     def dns_get_server_ip(self):
         resolver = dns.resolver.Resolver()
@@ -86,7 +86,7 @@ def main():
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
-    time.sleep(1)
+    time.sleep(2)
     client_ip , dns_ip = get_client_info()
     print("default DNS is " , dns_ip)
     for dns_name in j['dns'] :
@@ -97,7 +97,6 @@ def main():
         httping , download_speed = cdn_tester_q.httping()
         get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
                                                 httping=httping , download_speed = download_speed)
-        time.sleep(1)
         del  dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
     del j , domain , requests_target
 

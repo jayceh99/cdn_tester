@@ -12,8 +12,8 @@ def get_server_organization(domain , server_ip ,server_location, client_ip , dns
     tb.add_row(['Domain Name',domain])
     tb.add_row(['Server IP Address',server_ip])
     if httping != None :
-        tb.add_row(['httping',httping])
-        tb.add_row(['download speed',download_speed])
+        tb.add_row(['HTTPing',httping])
+        tb.add_row(['Download Speed',download_speed])
     r = requests.get(r'https://whois.tanet.edu.tw/showWhoisPublic.php?queryString='+str(server_ip)+'&submit=%E9%80%81%E5%87%BA')
     #r = requests.get(r'https://whois.tanet.edu.tw/showWhoisPublic.php?queryString=203.68.82.33&submit=%E9%80%81%E5%87%BA')
     data = html.fromstring(r.content.decode('UTF-8'))
