@@ -6,10 +6,11 @@ import get_server_info
 import os
 import json
 class cdn_tester:
-    def __init__(self,domain,dns_name,requests_target):
+    def __init__(self,domain,dns_name,requests_target,httping_target):
         self.domain = domain
         self.dns = dns_name
         self.requests_target = requests_target
+        self.httping_target = httping_target
         os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
         time.sleep(3)
 
@@ -26,7 +27,7 @@ class cdn_tester:
     
     def get_server_location(self , ip):
         try:
-            j = open(r'C:\Users\jayce\Desktop\cdn_tester\ip_list.json','r',encoding='UTF-8')
+            j = open(r'C:\Users\jayce\cdn_tester\ip_list.json','r',encoding='UTF-8')
             j = json.loads(j.read())
             location = '('+j[ip]+')'
             
@@ -37,16 +38,27 @@ class cdn_tester:
 
     def httping(self):
         try:
-            r = requests.get(self.requests_target)
+            r = requests.head(self.requests_target)
+            start_time = time.time()
+            r = requests.head(self.requests_target)
+            end_time = time.time()
+            if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
+                httping_ms = "Test Failed"
+            else:
+                use_time = end_time - start_time
+                httping_ms = str(int(((use_time)*1000))) +' ms'
+            del r
             start_time = time.time()
             r = requests.get(self.requests_target)
             end_time = time.time()
+            
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
-                return "Test Failed" , "Test Failed"
+                download_speed = "Test Failed"
             else:
                 use_time = end_time - start_time
-                download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')
-                return str(int(((use_time)*1000))) +' ms' , str(download_speed) + ' Mbps'
+                download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')+" Mbps"
+
+            return httping_ms , download_speed
         except Exception as e:
             return "Test Failed" , "Test Failed"
         
@@ -63,8 +75,8 @@ class cdn_tester:
             return formated_data
     
 def get_client_info():
-    re_pattern_dns = r'DNS 伺服器 . . . . . . . . . . . .: (\d+\.\d+\.\d+\.\d+)'
-    re_pattern_ipv4 = r'IPv4 位址 . . . . . . . . . . . . : (\d+\.\d+\.\d+\.\d+)'
+    re_pattern_dns = r'DNS Servers . . . . . . . . . . . : (\d+\.\d+\.\d+\.\d+)'
+    re_pattern_ipv4 = r'IPv4 Address. . . . . . . . . . . : (\d+\.\d+\.\d+\.\d+)'
     txt = os.popen('ipconfig/all').read()
 
     dns_result = re.search(re_pattern_dns, txt)
@@ -82,15 +94,16 @@ def get_client_info():
         
 def main():
     os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
-    j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
+    j = open(r'C:\Users\jayce\cdn_tester\config.json','r')
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
+    httping_target = j["httping_target"]
     time.sleep(2)
     client_ip , dns_ip = get_client_info()
     print("default DNS is " , dns_ip)
     for dns_name in j['dns'] :
-        cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
+        cdn_tester_q = cdn_tester(domain,dns_name['ip'] , requests_target , httping_target)
         os.popen('ipconfig/flushdns')
         server_ip , server_location = cdn_tester_q.dns_get_server_ip()
         client_ip , dns_ip = get_client_info()
