@@ -30,29 +30,36 @@ class cdn_tester:
             j = json.loads(j.read())
             location = '('+j[ip]+')'
             
-        except :
+        except Exception as e  :
             location = ''
         return location
 
 
     def httping(self):
         try:
-            r = requests.get(self.requests_target)
+            r = requests.head(self.requests_target)
+            start_time = time.time()
+            r = requests.head(self.requests_target)
+            end_time = time.time()
+            if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
+                httping_ms = "Test Failed"
+            else:
+                use_time = end_time - start_time
+                httping_ms = str(int(((use_time)*1000))) +' ms'
+            del r
             start_time = time.time()
             r = requests.get(self.requests_target)
             end_time = time.time()
+            
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
-                return "Test Failed" , "Test Failed"
+                download_speed = "Test Failed"
             else:
                 use_time = end_time - start_time
-                download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')
-                return str(int(((use_time)*1000))) +' ms' , str(download_speed) + ' Mbps'
-        except Exception as e:
+                download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')+" Mbps"
+
+            return httping_ms , download_speed
+        except :
             return "Test Failed" , "Test Failed"
-        
-
-
-
 
     def format_data(self , data):
         formated_data = str(data).replace('[','').replace(']','').replace('\'','')
@@ -81,27 +88,35 @@ def get_client_info():
     return ip_result , dns_result
         
 def main():
-    os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
-    j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
-    j = json.loads(j.read())
-    domain = j["domain"]
-    requests_target = j["requests_target"]
-    time.sleep(2)
-    client_ip , dns_ip = get_client_info()
-    print("default DNS is " , dns_ip)
-    for dns_name in j['dns'] :
-        cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
+    try:
+        j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
+        j = json.loads(j.read())
+        domain = j["domain"]
+        requests_target = j["requests_target"]
+        for dns_name in j['dns'] :
+            cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
+            os.popen('ipconfig/flushdns')
+            server_ip , server_location = cdn_tester_q.dns_get_server_ip()
+            client_ip , dns_ip = get_client_info()
+            httping , download_speed = cdn_tester_q.httping()
+            get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
+                                                    httping=httping , download_speed = download_speed)
+        os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
+        time.sleep(2)
+        client_ip , dns_ip = get_client_info()
+        cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
         os.popen('ipconfig/flushdns')
         server_ip , server_location = cdn_tester_q.dns_get_server_ip()
         client_ip , dns_ip = get_client_info()
         httping , download_speed = cdn_tester_q.httping()
-        get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
+        get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(default DNS)' , \
                                                 httping=httping , download_speed = download_speed)
-        del  dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
-    del j , domain , requests_target
+        del  j , domain , requests_target , dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
 
+    except :
+        pass
 
     
 if __name__ == '__main__':
     main()
-
+    input("按任意鍵結束")
