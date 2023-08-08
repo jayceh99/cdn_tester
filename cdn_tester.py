@@ -88,35 +88,31 @@ def get_client_info():
     return ip_result , dns_result
         
 def main():
-    try:
-        j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
-        j = json.loads(j.read())
-        domain = j["domain"]
-        requests_target = j["requests_target"]
-        for dns_name in j['dns'] :
-            cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
-            os.popen('ipconfig/flushdns')
-            server_ip , server_location = cdn_tester_q.dns_get_server_ip()
-            client_ip , dns_ip = get_client_info()
-            httping , download_speed = cdn_tester_q.httping()
-            get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
-                                                    httping=httping , download_speed = download_speed)
-        os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
-        time.sleep(2)
-        client_ip , dns_ip = get_client_info()
-        cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
+
+    j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
+    j = json.loads(j.read())
+    domain = j["domain"]
+    requests_target = j["requests_target"]
+    for dns_name in j['dns'] :
+        cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
         os.popen('ipconfig/flushdns')
         server_ip , server_location = cdn_tester_q.dns_get_server_ip()
         client_ip , dns_ip = get_client_info()
         httping , download_speed = cdn_tester_q.httping()
-        get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(default DNS)' , \
+        get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
                                                 httping=httping , download_speed = download_speed)
-        del  j , domain , requests_target , dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
+    os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
+    time.sleep(2)
+    client_ip , dns_ip = get_client_info()
+    cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
+    os.popen('ipconfig/flushdns')
+    server_ip , server_location = cdn_tester_q.dns_get_server_ip()
+    client_ip , dns_ip = get_client_info()
+    httping , download_speed = cdn_tester_q.httping()
+    get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(default DNS)' , \
+                                            httping=httping , download_speed = download_speed)
+    del  j , domain , requests_target , dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
 
-    except :
-        pass
-
-    
 if __name__ == '__main__':
     main()
     input("按任意鍵結束")
