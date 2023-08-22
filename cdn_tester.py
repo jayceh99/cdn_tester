@@ -11,11 +11,12 @@ class cdn_tester:
         self.dns = dns_name
         self.requests_target = requests_target
         os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
-        time.sleep(3)
+        time.sleep(3)  #buffer time 
 
     def dns_get_server_ip(self):
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.dns]
+        resolver.lifetime = 5.0
         answers = resolver.resolve(self.domain)
 
         for data in answers:
@@ -88,11 +89,21 @@ def get_client_info():
     return ip_result , dns_result
         
 def main():
-
     j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
+
+    os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
+    time.sleep(3)   #buffer time
+    client_ip , dns_ip = get_client_info()
+    cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
+    os.popen('ipconfig/flushdns')
+    server_ip , server_location = cdn_tester_q.dns_get_server_ip()
+    client_ip , dns_ip = get_client_info()
+    httping , download_speed = cdn_tester_q.httping()
+    get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(DHCP DNS)' , \
+                                            httping=httping , download_speed = download_speed)
     for dns_name in j['dns'] :
         cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
         os.popen('ipconfig/flushdns')
@@ -101,16 +112,7 @@ def main():
         httping , download_speed = cdn_tester_q.httping()
         get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
                                                 httping=httping , download_speed = download_speed)
-    os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
-    time.sleep(2)
-    client_ip , dns_ip = get_client_info()
-    cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
-    os.popen('ipconfig/flushdns')
-    server_ip , server_location = cdn_tester_q.dns_get_server_ip()
-    client_ip , dns_ip = get_client_info()
-    httping , download_speed = cdn_tester_q.httping()
-    get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(default DNS)' , \
-                                            httping=httping , download_speed = download_speed)
+        
     del  j , domain , requests_target , dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
 
 if __name__ == '__main__':
