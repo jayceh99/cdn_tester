@@ -17,7 +17,7 @@ class cdn_tester:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.dns]
         resolver.lifetime = 5.0
-        answers = resolver.resolve(self.domain)
+        answers = resolver.resolve(self.domain,'A')
 
         for data in answers:
             server_ip = str(data)
