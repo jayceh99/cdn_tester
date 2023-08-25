@@ -17,7 +17,7 @@ class cdn_tester:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.dns]
         resolver.lifetime = 5.0
-        answers = resolver.resolve(self.domain,'A')
+        answers = resolver.resolve(self.domain)
 
         for data in answers:
             server_ip = str(data)
@@ -74,20 +74,47 @@ def get_client_info():
     re_pattern_dns = r'DNS 伺服器 . . . . . . . . . . . .: (\d+\.\d+\.\d+\.\d+)'
     re_pattern_ipv4 = r'IPv4 位址 . . . . . . . . . . . . : (\d+\.\d+\.\d+\.\d+)'
     txt = os.popen('ipconfig/all').read()
-
     dns_result = re.search(re_pattern_dns, txt)
     if dns_result:
         dns_result = dns_result.group(1)
     else:
         dns_result = 'not found'
-
     ip_result = re.search(re_pattern_ipv4, txt)
     if ip_result:
         ip_result = ip_result.group(1)
     else:
         ip_result = 'not found'
     return ip_result , dns_result
-        
+
+
+def new_get_client_info():
+    #txt = open(r'C:\Users\jayce\Desktop\ipconfig.txt' , 'r').read()
+    txt = os.popen('ipconfig/all').read()
+    tmp = txt.split('\n')
+
+    flag = False
+    ipv6_addr = 'notfound'
+    ipv4_addr = 'notfound'
+    dns_name = 'notfound'
+    for i in tmp :
+
+        if 'IPv6 位址. . . . . . . . . . . . .: ' in i:
+            ipv6_addr = i.replace('IPv6 位址. . . . . . . . . . . . .: ','').replace('(偏好選項)','').replace(' ','')
+        if 'IPv4 位址 . . . . . . . . . . . . : ' in i:
+            ipv4_addr = i.replace('IPv4 位址 . . . . . . . . . . . . : ','').replace('(偏好選項)','').replace(' ','')
+
+        if 'DNS 伺服器 . . . . . . . . . . . .' in i:
+            flag = True    
+        if 'NetBIOS over Tcpip' in i:
+            flag = False
+        if flag == True:
+            i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
+            dns_name = i
+    del txt ,tmp , flag , i
+    print('v6 : '+str(ipv6_addr)+'\nv4 : '+str(ipv4_addr)+'\ndns : '+str(dns_name) ) 
+    return ipv4_addr , ipv6_addr , dns_name
+
+
 def main():
     j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
     j = json.loads(j.read())
@@ -97,6 +124,7 @@ def main():
     os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
     time.sleep(3)   #buffer time
     client_ip , dns_ip = get_client_info()
+
     cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
     os.popen('ipconfig/flushdns')
     server_ip , server_location = cdn_tester_q.dns_get_server_ip()
@@ -104,6 +132,7 @@ def main():
     httping , download_speed = cdn_tester_q.httping()
     get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(DHCP DNS)' , \
                                             httping=httping , download_speed = download_speed)
+
     for dns_name in j['dns'] :
         cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
         os.popen('ipconfig/flushdns')
