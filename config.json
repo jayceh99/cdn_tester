@@ -1,12 +1,12 @@
 {
     "domain": "origin.tanetcdn.edu.tw",
-    "requests_target": "https://origin.tanetcdn.edu.tw/images/Video.mp4",
+    "requests_target": "https://origin.tanetcdn.edu.tw/images/TANetCDN.mp4",
     "dns": [
         {
-          "ip":"1.1.1.1"
+          "ip":"168.95.1.1"
         },
         {
-          "ip":"140.111.34.135"
+          "ip":"163.28.6.1"
         }
       ]
 
