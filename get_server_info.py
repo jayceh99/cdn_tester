@@ -3,17 +3,18 @@ from lxml import html
 import requests
 import json
 
-def get_server_organization(domain , server_ip ,server_location, client_ip , dns_name ,  httping = None , download_speed = None):
+def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ip , server_location ,  httping  , download_speed):
 
     tb = pt.PrettyTable()
     tb.field_names = ['Key','Value']
-    tb.add_row(['Client IP Address',client_ip])
-    tb.add_row(['DNS IP Address',dns_name])
+    if ipv6_addr != None :
+        tb.add_row(['Client IPv6 Address', ipv6_addr])
+    tb.add_row(['Client IPv4 Address', ipv4_addr])
+    tb.add_row(['DNS IP Address',dns_ip])
     tb.add_row(['Domain Name',domain])
     tb.add_row(['Server IP Address',server_ip])
-    if httping != None :
-        tb.add_row(['HTTPing',httping])
-        tb.add_row(['Download Speed',download_speed])
+    tb.add_row(['HTTPing',httping])
+    tb.add_row(['Download Speed',download_speed])
     r = requests.get(r'https://whois.tanet.edu.tw/showWhoisPublic.php?queryString='+str(server_ip)+'&submit=%E9%80%81%E5%87%BA')
     #r = requests.get(r'https://whois.tanet.edu.tw/showWhoisPublic.php?queryString=203.68.82.33&submit=%E9%80%81%E5%87%BA')
     data = html.fromstring(r.content.decode('UTF-8'))
@@ -36,7 +37,7 @@ def get_server_organization(domain , server_ip ,server_location, client_ip , dns
                 value = format_data(str(data.xpath('/html/body/center/table[2]/tr['+str(i)+']/td[2]/text()')))
             tb.add_row([key,value])
     print(tb)
-    del domain , server_ip , client_ip , httping , r , data , max , tmp_data , key , value , tb , flag 
+    del ipv6_addr , ipv4_addr  , dns_ip , domain , server_ip , server_location ,  httping , download_speed , r , data , max , tmp_data , key , value , tb , flag 
 
 def format_data(data):
     formated_data = str(data).replace('[','').replace(']','').replace('\'','')

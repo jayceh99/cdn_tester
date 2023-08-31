@@ -6,12 +6,13 @@ import get_server_info
 import os
 import json
 class cdn_tester:
-    def __init__(self,domain,dns_name,requests_target):
+    def __init__(self,domain,dns_ip,requests_target,dhcp=None):
         self.domain = domain
-        self.dns = dns_name
+        self.dns = dns_ip
         self.requests_target = requests_target
-        os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
-        time.sleep(3)  #buffer time 
+        if dhcp == None :
+            os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
+            time.sleep(3)  #buffer time 
 
     def dns_get_server_ip(self):
         resolver = dns.resolver.Resolver()
@@ -23,6 +24,7 @@ class cdn_tester:
             server_ip = str(data)
         server_ip = self.format_data(server_ip)
         server_location = self.get_server_location(server_ip)
+        del resolver , answers , data
         return server_ip  , server_location
     
     def get_server_location(self , ip):
@@ -31,7 +33,7 @@ class cdn_tester:
             j = json.loads(j.read())
             location = '('+j[ip]+')'
             
-        except Exception as e  :
+        except Exception :
             location = ''
         return location
 
@@ -70,49 +72,34 @@ class cdn_tester:
         else:
             return formated_data
     
-def get_client_info():
-    re_pattern_dns = r'DNS 伺服器 . . . . . . . . . . . .: (\d+\.\d+\.\d+\.\d+)'
-    re_pattern_ipv4 = r'IPv4 位址 . . . . . . . . . . . . : (\d+\.\d+\.\d+\.\d+)'
-    txt = os.popen('ipconfig/all').read()
-    dns_result = re.search(re_pattern_dns, txt)
-    if dns_result:
-        dns_result = dns_result.group(1)
-    else:
-        dns_result = 'not found'
-    ip_result = re.search(re_pattern_ipv4, txt)
-    if ip_result:
-        ip_result = ip_result.group(1)
-    else:
-        ip_result = 'not found'
-    return ip_result , dns_result
-
-
-def new_get_client_info():
-    #txt = open(r'C:\Users\jayce\Desktop\ipconfig.txt' , 'r').read()
+def get_client_info(dhcp=False):
     txt = os.popen('ipconfig/all').read()
     tmp = txt.split('\n')
-
     flag = False
-    ipv6_addr = 'notfound'
-    ipv4_addr = 'notfound'
-    dns_name = 'notfound'
+    ipv6_addr = None
+    ipv4_addr = None
+    dns_name = None
     for i in tmp :
 
         if 'IPv6 位址. . . . . . . . . . . . .: ' in i:
             ipv6_addr = i.replace('IPv6 位址. . . . . . . . . . . . .: ','').replace('(偏好選項)','').replace(' ','')
         if 'IPv4 位址 . . . . . . . . . . . . : ' in i:
             ipv4_addr = i.replace('IPv4 位址 . . . . . . . . . . . . : ','').replace('(偏好選項)','').replace(' ','')
-
         if 'DNS 伺服器 . . . . . . . . . . . .' in i:
-            flag = True    
+            i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
+            dns_name = i
+            flag = True   
         if 'NetBIOS over Tcpip' in i:
             flag = False
         if flag == True:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
-            dns_name = i
+            if len(i) > len(dns_name) and dhcp == True:
+                dns_name = i  
+            elif len(i) < len(dns_name) and dhcp == False:
+                dns_name = i
     del txt ,tmp , flag , i
-    print('v6 : '+str(ipv6_addr)+'\nv4 : '+str(ipv4_addr)+'\ndns : '+str(dns_name) ) 
-    return ipv4_addr , ipv6_addr , dns_name
+    #print('v6 : '+str(ipv6_addr)+'\nv4 : '+str(ipv4_addr)+'\ndns : '+str(dns_name) ) 
+    return ipv6_addr , ipv4_addr , dns_name
 
 
 def main():
@@ -120,29 +107,29 @@ def main():
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
-
+    #dhcp test
     os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
     time.sleep(3)   #buffer time
-    client_ip , dns_ip = get_client_info()
-
-    cdn_tester_q = cdn_tester(domain,dns_ip,requests_target)
+    ipv6_addr , ipv4_addr ,  dns_ip = get_client_info(dhcp=True)
+    cdn_tester_q = cdn_tester(domain,dns_ip,requests_target,dhcp=True)
     os.popen('ipconfig/flushdns')
     server_ip , server_location = cdn_tester_q.dns_get_server_ip()
-    client_ip , dns_ip = get_client_info()
     httping , download_speed = cdn_tester_q.httping()
-    get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip+'(DHCP DNS)' , \
-                                            httping=httping , download_speed = download_speed)
-
+    get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip+"(DHCP DNS)" , domain = domain , \
+                                            server_ip = server_ip , server_location = server_location ,  httping = httping  , \
+                                            download_speed = download_speed)
+    #normal test
     for dns_name in j['dns'] :
         cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
         os.popen('ipconfig/flushdns')
         server_ip , server_location = cdn_tester_q.dns_get_server_ip()
-        client_ip , dns_ip = get_client_info()
+        ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
         httping , download_speed = cdn_tester_q.httping()
-        get_server_info.get_server_organization(domain , server_ip ,server_location,  client_ip , dns_name=dns_ip , \
-                                                httping=httping , download_speed = download_speed)
-        
-    del  j , domain , requests_target , dns_name , cdn_tester_q , server_ip , server_location , client_ip , httping  , download_speed 
+        get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
+                                                server_ip = server_ip , server_location = server_location ,  httping = httping  , \
+                                                download_speed = download_speed)
+    
+    del  j , domain , requests_target , dns_name , dns_ip , cdn_tester_q , server_ip , server_location , ipv4_addr , ipv6_addr , httping  , download_speed 
 
 if __name__ == '__main__':
     main()
