@@ -33,9 +33,9 @@ def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ip
             key = format_data(str(data.xpath('/html/body/center/table[2]/tr['+str(i)+']/td[1]/text()')))
             if key == 'Chinese Name' :
                 value = format_data(str(data.xpath('/html/body/center/table[2]/tr['+str(i)+']/td[2]/text()')))+server_location
-            else :
-                value = format_data(str(data.xpath('/html/body/center/table[2]/tr['+str(i)+']/td[2]/text()')))
-            tb.add_row([key,value])
+                tb.add_row([key,value])
+                break
+
     print(tb)
     del ipv6_addr , ipv4_addr  , dns_ip , domain , server_ip , server_location ,  httping , download_speed , r , data , max , tmp_data , key , value , tb , flag 
 
