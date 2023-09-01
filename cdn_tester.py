@@ -6,11 +6,11 @@ import get_server_info
 import os
 import json
 class cdn_tester:
-    def __init__(self,domain,dns_ip,requests_target,dhcp=None):
+    def __init__(self,domain,dns_ip,requests_target,dhcp=False):
         self.domain = domain
         self.dns = dns_ip
         self.requests_target = requests_target
-        if dhcp == None :
+        if dhcp == False :
             os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
             time.sleep(3)  #buffer time 
 
@@ -18,7 +18,7 @@ class cdn_tester:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.dns]
         resolver.lifetime = 5.0
-        answers = resolver.resolve(self.domain)
+        answers = resolver.resolve(self.domain , 'A')
 
         for data in answers:
             server_ip = str(data)
@@ -29,7 +29,7 @@ class cdn_tester:
     
     def get_server_location(self , ip):
         try:
-            j = open(r'C:\Users\jayce\Desktop\cdn_tester\ip_list.json','r',encoding='UTF-8')
+            j = open(r'C:\ip_list.json','r',encoding='UTF-8')
             j = json.loads(j.read())
             location = '('+j[ip]+')'
             
@@ -103,7 +103,7 @@ def get_client_info(dhcp=False):
 
 
 def main():
-    j = open(r'C:\Users\jayce\Desktop\cdn_tester\config.json','r')
+    j = open(r'C:\config.json','r')
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
