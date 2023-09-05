@@ -1,13 +1,14 @@
 {
-    "domain": "origin.tanetcdn.edu.tw",
-    "requests_target": "https://origin.tanetcdn.edu.tw/images/TANetCDN.mp4",
-    "dns": [
-        {
-          "ip":"168.95.1.1"
-        },
-        {
-          "ip":"163.28.6.1"
-        }
-      ]
+  "nic_name":"wifi",
+  "domain": "www.tanetcdn.edu.tw",
+  "requests_target": "https://www.tanetcdn.edu.tw",
+  "dns": [
+    {
+      "ip":"168.95.1.1"
+    },
+    {
+      "ip":"163.28.6.1"
+    }
+    ]
 
-  }
+}
