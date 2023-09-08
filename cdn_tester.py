@@ -1,6 +1,5 @@
 import requests
 import dns.resolver
-import re
 import time  
 import get_server_info
 import os
@@ -18,14 +17,19 @@ class cdn_tester:
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.dns]
         resolver.lifetime = 5.0
+        answers = resolver.resolve(self.domain , 'AAAA')
+
+        for data in answers:
+            server_ipv6 = str(data)
+        server_locationv6 = self.get_server_location(server_ipv6)
         answers = resolver.resolve(self.domain , 'A')
 
         for data in answers:
-            server_ip = str(data)
-        server_ip = self.format_data(server_ip)
-        server_location = self.get_server_location(server_ip)
+            server_ipv4 = str(data)
+        server_locationv4 = self.get_server_location(server_ipv4)
+        
         del resolver , answers , data
-        return server_ip  , server_location
+        return server_ipv6  , server_locationv6 , server_ipv4 , server_locationv4
     
     def get_server_location(self , ip):
         try:
@@ -63,15 +67,9 @@ class cdn_tester:
             return httping_ms , download_speed
         except :
             return "Test Failed" , "Test Failed"
+        
 
-    def format_data(self , data):
-        formated_data = str(data).replace('[','').replace(']','').replace('\'','')
-        if '：' in formated_data:
-            formated_data = formated_data.split('：')
-            return formated_data
-        else:
-            return formated_data
-    
+
 def get_client_info(dhcp=False):
     txt = os.popen('ipconfig/all').read()
     tmp = txt.split('\n')
@@ -93,12 +91,17 @@ def get_client_info(dhcp=False):
             flag = False
         if flag == True:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
+
+            '''
             if len(i) > len(dns_name) and dhcp == True:
                 dns_name = i  
             elif len(i) < len(dns_name) and dhcp == False:
                 dns_name = i
+            '''
+            if len(i) < len(dns_name) :
+                dns_name = i
+            
     del txt ,tmp , flag , i
-    #print('v6 : '+str(ipv6_addr)+'\nv4 : '+str(ipv4_addr)+'\ndns : '+str(dns_name) ) 
     return ipv6_addr , ipv4_addr , dns_name
 
 
@@ -108,29 +111,47 @@ def main():
     domain = j["domain"]
     requests_target = j["requests_target"]
     #dhcp test
+    
     os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
     time.sleep(3)   #buffer time
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info(dhcp=True)
     cdn_tester_q = cdn_tester(domain,dns_ip,requests_target,dhcp=True)
     os.popen('ipconfig/flushdns')
-    server_ip , server_location = cdn_tester_q.dns_get_server_ip()
+    server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
     httping , download_speed = cdn_tester_q.httping()
     get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip+"(DHCP DNS)" , domain = domain , \
-                                            server_ip = server_ip , server_location = server_location ,  httping = httping  , \
-                                            download_speed = download_speed)
+                                            server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
+                                            httping = httping  , download_speed = download_speed)
     #normal test
+
     for dns_name in j['dns'] :
         cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
         os.popen('ipconfig/flushdns')
-        server_ip , server_location = cdn_tester_q.dns_get_server_ip()
+        server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
         ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
         httping , download_speed = cdn_tester_q.httping()
         get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
-                                                server_ip = server_ip , server_location = server_location ,  httping = httping  , \
-                                                download_speed = download_speed)
+                                                server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
+                                                httping = httping  , download_speed = download_speed)
     
-    del  j , domain , requests_target , dns_name , dns_ip , cdn_tester_q , server_ip , server_location , ipv4_addr , ipv6_addr , httping  , download_speed 
+    del  j , domain , requests_target , dns_name , dns_ip , cdn_tester_q , server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 , ipv4_addr , ipv6_addr , httping  , download_speed 
+
+
+def test():
+
+    resolver = dns.resolver.Resolver()
+    resolver.nameservers = ["8.8.8.8"]
+    resolver.lifetime = 5.0
+    answers = resolver.resolve("www.tanetcdn.edu.tw" , 'A')
+    for data in answers:
+        server_ipv4 = str(data)
+    print(server_ipv4)
+    answers = resolver.resolve("www.tanetcdn.edu.tw" , 'AAAA')
+    for data in answers:
+        server_ipv6 = str(data)
+    print(server_ipv6)
 
 if __name__ == '__main__':
     main()
     input("按任意鍵結束")
+    #test()
