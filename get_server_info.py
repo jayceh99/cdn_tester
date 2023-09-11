@@ -3,23 +3,31 @@ from lxml import html
 import requests
 import json
 
-def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 ,  httping  , download_speed):
+def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4  , httping  , download_speed , test_type = None , dhcp = False):
     keyv6 , valuev6 = tanetwhois(server_ipv6 , server_locationv6)
     keyv4 , valuev4 = tanetwhois(server_ipv4 , server_locationv4)
+    i = 1
     tb = pt.PrettyTable()
     tb.field_names = ['Key','Value']
     tb.add_row(['HTTPing',httping])
     tb.add_row(['Download Speed',download_speed])
     tb.add_row([keyv6+" IPv6" , valuev6+"  #IPv6"])
     tb.add_row([keyv4+" IPv4" , valuev4+"  #IPv4"])
-    tb.add_row(['Server IPv6 Address',server_ipv6])
-    tb.add_row(['Server IPv4 Address',server_ipv4])
-
+    tb.add_row(['Server IPv6 Address' , server_ipv6])
+    tb.add_row(['Server IPv4 Address' , server_ipv4])
+    tb.add_row(['Test type (IPv6 or IPv4)' , test_type])
     if ipv6_addr != None :
         tb.add_row(['Client IPv6 Address', ipv6_addr])
-    tb.add_row(['Client IPv4 Address', ipv4_addr]) 
-    tb.add_row(['DNS IP Address',dns_ip])
-    tb.add_row(['Test Domain Name',domain]) 
+    tb.add_row(['Client IPv4 Address' , ipv4_addr]) 
+    if dhcp == True:
+        for dns_ips in dns_ip :
+            tb.add_row(['DNS '+str(i)+' IP Address' , dns_ips+' (DHCP DNS)'])
+            i = i + 1     
+    else:
+        for dns_ips in dns_ip :
+            tb.add_row(['DNS '+str(i)+' IP Address' , dns_ips])
+            i = i + 1 
+    tb.add_row(['Test Domain Name' , domain]) 
     print(tb)
     del ipv6_addr , ipv4_addr  , dns_ip , domain , server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 ,  httping , download_speed , tb 
 

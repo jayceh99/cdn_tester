@@ -44,13 +44,22 @@ class cdn_tester:
 
     def httping(self):
         try:
-            r = requests.head(self.requests_target)
+            r = requests.get(self.requests_target , stream=True)
             start_time = time.time()
-            r = requests.head(self.requests_target)
+            r = requests.get(self.requests_target , stream=True)
             end_time = time.time()
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
                 httping_ms = "Test Failed"
+                test_type = "None"
             else:
+                test_type = r.raw.connection.sock.getpeername()
+                test_type  = test_type[0]
+                if ":" in test_type :
+                    test_type = "IPv6"
+                elif "." in test_type :
+                    test_type = "IPv4"
+                else :
+                    test_type = "None"
                 use_time = end_time - start_time
                 httping_ms = str(int(((use_time)*1000))) +' ms'
             del r
@@ -60,13 +69,14 @@ class cdn_tester:
             
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
                 download_speed = "Test Failed"
+                test_type = "None"
             else:
                 use_time = end_time - start_time
                 download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')+" Mbps"
 
-            return httping_ms , download_speed
+            return httping_ms , download_speed , test_type
         except :
-            return "Test Failed" , "Test Failed"
+            return "Test Failed" , "Test Failed" , "Test Failed"
         
 
 
@@ -76,7 +86,7 @@ def get_client_info(dhcp=False):
     flag = False
     ipv6_addr = None
     ipv4_addr = None
-    dns_name = None
+    dns_name = []
     for i in tmp :
 
         if 'IPv6 位址. . . . . . . . . . . . .: ' in i:
@@ -85,21 +95,22 @@ def get_client_info(dhcp=False):
             ipv4_addr = i.replace('IPv4 位址 . . . . . . . . . . . . : ','').replace('(偏好選項)','').replace(' ','')
         if 'DNS 伺服器 . . . . . . . . . . . .' in i:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
-            dns_name = i
             flag = True   
         if 'NetBIOS over Tcpip' in i:
             flag = False
         if flag == True:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
-
+            dns_name.append(i)
+            if dhcp == False :
+                break
             '''
             if len(i) > len(dns_name) and dhcp == True:
                 dns_name = i  
             elif len(i) < len(dns_name) and dhcp == False:
                 dns_name = i
-            '''
             if len(i) < len(dns_name) :
                 dns_name = i
+            '''
             
     del txt ,tmp , flag , i
     return ipv6_addr , ipv4_addr , dns_name
@@ -115,13 +126,13 @@ def main():
     os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
     time.sleep(3)   #buffer time
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info(dhcp=True)
-    cdn_tester_q = cdn_tester(domain,dns_ip,requests_target,dhcp=True)
+    cdn_tester_q = cdn_tester(domain,dns_ip[0],requests_target,dhcp=True)
     os.popen('ipconfig/flushdns')
     server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
-    httping , download_speed = cdn_tester_q.httping()
-    get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip+"(DHCP DNS)" , domain = domain , \
+    httping , download_speed  , test_type = cdn_tester_q.httping()
+    get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
                                             server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
-                                            httping = httping  , download_speed = download_speed)
+                                            test_type=test_type , httping = httping  , download_speed = download_speed , dhcp = True)
     #normal test
 
     for dns_name in j['dns'] :
@@ -129,10 +140,10 @@ def main():
         os.popen('ipconfig/flushdns')
         server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
         ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
-        httping , download_speed = cdn_tester_q.httping()
+        httping , download_speed  , test_type = cdn_tester_q.httping()
         get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
                                                 server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
-                                                httping = httping  , download_speed = download_speed)
+                                                test_type=test_type , httping = httping  , download_speed = download_speed)
     
     del  j , domain , requests_target , dns_name , dns_ip , cdn_tester_q , server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 , ipv4_addr , ipv6_addr , httping  , download_speed 
 
