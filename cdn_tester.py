@@ -5,29 +5,32 @@ import get_server_info
 import os
 import json
 class cdn_tester:
-    def __init__(self,domain,dns_ip,requests_target,dhcp=False):
+    def __init__(self , domain , dns_ip , requests_target , ipv6_addr = None , ipv6 = None , dhcp = False):
         self.domain = domain
         self.dns = dns_ip
         self.requests_target = requests_target
+
         if dhcp == False :
             os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
-            time.sleep(3)  #buffer time 
+            if ipv6_addr != None:
+                os.popen('netsh interface ipv6 set dnsservers "wifi" static '+ipv6+' primary')
+            time.sleep(5)  #buffer time 
 
     def dns_get_server_ip(self):
+        
         resolver = dns.resolver.Resolver()
         resolver.nameservers = [self.dns]
         resolver.lifetime = 5.0
+        #IPv6
         answers = resolver.resolve(self.domain , 'AAAA')
-
         for data in answers:
             server_ipv6 = str(data)
         server_locationv6 = self.get_server_location(server_ipv6)
+        #IPv4
         answers = resolver.resolve(self.domain , 'A')
-
         for data in answers:
             server_ipv4 = str(data)
         server_locationv4 = self.get_server_location(server_ipv4)
-        
         del resolver , answers , data
         return server_ipv6  , server_locationv6 , server_ipv4 , server_locationv4
     
@@ -101,8 +104,9 @@ def get_client_info(dhcp=False):
         if flag == True:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
             dns_name.append(i)
-            if dhcp == False :
-                break
+         
+
+
             '''
             if len(i) > len(dns_name) and dhcp == True:
                 dns_name = i  
@@ -122,11 +126,12 @@ def main():
     domain = j["domain"]
     requests_target = j["requests_target"]
     #dhcp test
-    
+    ipv6_addr = None
     os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
-    time.sleep(3)   #buffer time
+    os.popen('netsh interface ipv6 set dnsservers "wifi"  dhcp')
+    time.sleep(5)   #buffer time
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info(dhcp=True)
-    cdn_tester_q = cdn_tester(domain,dns_ip[0],requests_target,dhcp=True)
+    cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target , ipv6_addr = ipv6_addr , dhcp=True)
     os.popen('ipconfig/flushdns')
     server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
     httping , download_speed  , test_type = cdn_tester_q.httping()
@@ -134,9 +139,9 @@ def main():
                                             server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
                                             test_type=test_type , httping = httping  , download_speed = download_speed , dhcp = True)
     #normal test
-
+    
     for dns_name in j['dns'] :
-        cdn_tester_q = cdn_tester(domain,dns_name['ip'],requests_target)
+        cdn_tester_q = cdn_tester(domain , dns_name['ipv4'] , requests_target , ipv6_addr = ipv6_addr , ipv6 = dns_name['ipv6'])
         os.popen('ipconfig/flushdns')
         server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
         ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
