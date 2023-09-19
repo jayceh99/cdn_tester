@@ -22,21 +22,30 @@ class cdn_tester:
         resolver.nameservers = [self.dns]
         resolver.lifetime = 5.0
         #IPv6
-        answers = resolver.resolve(self.domain , 'AAAA')
-        for data in answers:
-            server_ipv6 = str(data)
-        server_locationv6 = self.get_server_location(server_ipv6)
+        try:
+            answers = resolver.resolve(self.domain , 'AAAA')
+            for data in answers:
+                server_ipv6 = str(data)
+            server_locationv6 = self.get_server_location(server_ipv6)
+        except dns.resolver.NoAnswer :
+            server_locationv6 = False
+            server_ipv6 = "Not found"
         #IPv4
-        answers = resolver.resolve(self.domain , 'A')
-        for data in answers:
-            server_ipv4 = str(data)
-        server_locationv4 = self.get_server_location(server_ipv4)
+        try:
+            answers = resolver.resolve(self.domain , 'A')
+            for data in answers:
+                server_ipv4 = str(data)
+            server_locationv4 = self.get_server_location(server_ipv4)
+        except dns.resolver.NoAnswer :
+            server_locationv4 = False
+            server_ipv4 = "Not found"
+
         del resolver , answers , data
         return server_ipv6  , server_locationv6 , server_ipv4 , server_locationv4
     
     def get_server_location(self , ip):
         try:
-            j = open(r'C:\ip_list.json','r',encoding='UTF-8')
+            j = open(r'C:\ip_list.json','r',encoding = 'UTF-8')
             j = json.loads(j.read())
             location = '('+j[ip]+')'
             
