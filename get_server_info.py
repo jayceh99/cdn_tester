@@ -7,13 +7,18 @@ def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ip
     if server_ipv6 == "Not found" :
         keyv6 , valuev6 = "Chinese Name" , "Not found"
     else:
-        keyv6 , valuev6 = tanetwhois(server_ipv6 , server_locationv6)
 
+        try:
+            keyv6 , valuev6 = tanetwhois(server_ipv6 , server_locationv6)
+        except Exception:
+            keyv6 , valuev6 = "Chinese Name" , ""
     if server_ipv4 == "Not found" :
         keyv4 , valuev4 = "Chinese Name" , "Not found" 
     else:
-        keyv4 , valuev4 = tanetwhois(server_ipv4 , server_locationv4)
-
+        try:
+            keyv4 , valuev4 = tanetwhois(server_ipv4 , server_locationv4)
+        except Exception:
+            keyv4 , valuev4 = "Chinese Name" , "Not found"
     i = 1
     tb = pt.PrettyTable()
     tb.field_names = ['Key','Value']
