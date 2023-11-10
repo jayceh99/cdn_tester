@@ -4,21 +4,21 @@ import requests
 import json
 
 def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4  , httping  , download_speed , test_type = None , dhcp = False):
-    if server_ipv6 == "Not found" :
-        keyv6 , valuev6 = "Chinese Name" , "Not found"
+    if server_ipv6 == "NoAnswer" :
+        keyv6 , valuev6 = "Chinese Name" , "NoAnswer"
     else:
 
         try:
             keyv6 , valuev6 = tanetwhois(server_ipv6 , server_locationv6)
         except Exception:
             keyv6 , valuev6 = "Chinese Name" , ""
-    if server_ipv4 == "Not found" :
-        keyv4 , valuev4 = "Chinese Name" , "Not found" 
+    if server_ipv4 == "NoAnswer" :
+        keyv4 , valuev4 = "Chinese Name" , "NoAnswer" 
     else:
         try:
             keyv4 , valuev4 = tanetwhois(server_ipv4 , server_locationv4)
         except Exception:
-            keyv4 , valuev4 = "Chinese Name" , "Not found"
+            keyv4 , valuev4 = "Chinese Name" , "NoAnswer"
     i = 1
     tb = pt.PrettyTable()
     tb.field_names = ['Key','Value']

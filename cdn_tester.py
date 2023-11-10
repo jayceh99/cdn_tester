@@ -29,7 +29,12 @@ class cdn_tester:
             server_locationv6 = self.get_server_location(server_ipv6)
         except dns.resolver.NoAnswer :
             server_locationv6 = False
+            server_ipv6 = "NoAnswer"
+        '''
+        except dns.resolver.NoNameservers :
+            server_locationv6 = False
             server_ipv6 = "Not found"
+        '''
         #IPv4
         try:
             answers = resolver.resolve(self.domain , 'A')
@@ -38,9 +43,12 @@ class cdn_tester:
             server_locationv4 = self.get_server_location(server_ipv4)
         except dns.resolver.NoAnswer :
             server_locationv4 = False
+            server_ipv4 = "NoAnswer"
+        '''
+        except dns.resolver.NoNameservers :
+            server_locationv4 = False
             server_ipv4 = "Not found"
-
-        del resolver , answers , data
+        '''
         return server_ipv6  , server_locationv6 , server_ipv4 , server_locationv4
     
     def get_server_location(self , ip):
@@ -64,6 +72,7 @@ class cdn_tester:
                 httping_ms = "Test Failed"
                 test_type = "None"
             else:
+
                 test_type = r.raw.connection.sock.getpeername()
                 test_type  = test_type[0]
                 if ":" in test_type :
