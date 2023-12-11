@@ -122,17 +122,6 @@ def get_client_info(dhcp=False):
         if flag == True:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
             dns_name.append(i)
-         
-
-
-            '''
-            if len(i) > len(dns_name) and dhcp == True:
-                dns_name = i  
-            elif len(i) < len(dns_name) and dhcp == False:
-                dns_name = i
-            if len(i) < len(dns_name) :
-                dns_name = i
-            '''
             
     del txt ,tmp , flag , i
     return ipv6_addr , ipv4_addr , dns_name
@@ -144,6 +133,8 @@ def main():
     domain = j["domain"]
     requests_target = j["requests_target"]
     nic_name = j["nic_name"]
+    #domain = 'origin-direct.tanetcdn.edu.tw'
+    #requests_target = 'https://origin-direct.tanetcdn.edu.tw/assets/images/Video.mp4'
     #dhcp test
     ipv6_addr = None
     os.popen('netsh interface ip set dnsservers "'+nic_name+'"  dhcp')
@@ -160,8 +151,8 @@ def main():
     #normal test
     
     for dns_name in j['dns'] :
-        #domain =  "mediavideocloudedutw-direct.tanetcdn.edu.tw"
-        #requests_target = "https://mediavideocloudedutw-direct.tanetcdn.edu.tw/vod/_definst_/mp4:uploads.video/2019/12/video_354407_1080.mp4/segment_ctvideo_ridp0va0br4444619_cs1786770_w871332086_mpd.m4s"
+        #domain =  "www.tanetcdn.edu.tw"
+        #requests_target = "https://www.tanetcdn.edu.tw/assets/images/Video.mp4"
         cdn_tester_q = cdn_tester(domain , dns_name['ipv4'] , requests_target , nic_name , ipv6_addr = ipv6_addr , ipv6 = dns_name['ipv6'])
         os.popen('ipconfig/flushdns')
         server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
