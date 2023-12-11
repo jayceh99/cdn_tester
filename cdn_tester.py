@@ -139,7 +139,7 @@ def get_client_info(dhcp=False):
 
 
 def main():
-    j = open(r'C:\config.json','r')
+    j = open(r'C:\config.json','r' , encoding="utf-8")
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
