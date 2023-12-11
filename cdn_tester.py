@@ -5,15 +5,15 @@ import get_server_info
 import os
 import json
 class cdn_tester:
-    def __init__(self , domain , dns_ip , requests_target , ipv6_addr = None , ipv6 = None , dhcp = False):
+    def __init__(self , domain , dns_ip , requests_target , nic_name , ipv6_addr = None , ipv6 = None , dhcp = False):
         self.domain = domain
         self.dns = dns_ip
         self.requests_target = requests_target
-
+        self.nic_name = nic_name
         if dhcp == False :
-            os.popen('netsh interface ip set dnsservers "wifi" static '+self.dns+' primary')
+            os.popen('netsh interface ip set dnsservers "'+nic_name+'" static '+self.dns+' primary')
             if ipv6_addr != None:
-                os.popen('netsh interface ipv6 set dnsservers "wifi" static '+ipv6+' primary')
+                os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+ipv6+' primary')
             time.sleep(5)  #buffer time 
 
     def dns_get_server_ip(self):
@@ -143,13 +143,14 @@ def main():
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
+    nic_name = j["nic_name"]
     #dhcp test
     ipv6_addr = None
-    os.popen('netsh interface ip set dnsservers "wifi"  dhcp')
-    os.popen('netsh interface ipv6 set dnsservers "wifi"  dhcp')
+    os.popen('netsh interface ip set dnsservers "'+nic_name+'"  dhcp')
+    os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'"  dhcp')
     time.sleep(5)   #buffer time
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info(dhcp=True)
-    cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target , ipv6_addr = ipv6_addr , dhcp=True)
+    cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target , nic_name , ipv6_addr = ipv6_addr , dhcp=True)
     os.popen('ipconfig/flushdns')
     server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
     httping , download_speed  , test_type = cdn_tester_q.httping()
@@ -159,7 +160,9 @@ def main():
     #normal test
     
     for dns_name in j['dns'] :
-        cdn_tester_q = cdn_tester(domain , dns_name['ipv4'] , requests_target , ipv6_addr = ipv6_addr , ipv6 = dns_name['ipv6'])
+        #domain =  "mediavideocloudedutw-direct.tanetcdn.edu.tw"
+        #requests_target = "https://mediavideocloudedutw-direct.tanetcdn.edu.tw/vod/_definst_/mp4:uploads.video/2019/12/video_354407_1080.mp4/segment_ctvideo_ridp0va0br4444619_cs1786770_w871332086_mpd.m4s"
+        cdn_tester_q = cdn_tester(domain , dns_name['ipv4'] , requests_target , nic_name , ipv6_addr = ipv6_addr , ipv6 = dns_name['ipv6'])
         os.popen('ipconfig/flushdns')
         server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
         ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
