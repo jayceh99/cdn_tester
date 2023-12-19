@@ -5,16 +5,10 @@ import get_server_info
 import os
 import json
 class cdn_tester:
-    def __init__(self , domain , dns_ip , requests_target , nic_name , ipv6_addr = None , ipv6 = None , dhcp = False):
+    def __init__(self , domain , dns_ip , requests_target):
         self.domain = domain
         self.dns = dns_ip
         self.requests_target = requests_target
-        self.nic_name = nic_name
-        if dhcp == False :
-            os.popen('netsh interface ip set dnsservers "'+nic_name+'" static '+self.dns+' primary')
-            if ipv6_addr != None:
-                os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+ipv6+' primary')
-            time.sleep(5)  #buffer time 
 
     def dns_get_server_ip(self):
         
@@ -101,7 +95,7 @@ class cdn_tester:
         
 
 
-def get_client_info(dhcp=False):
+def get_client_info():
     txt = os.popen('ipconfig/all').read()
     tmp = txt.split('\n')
     flag = False
@@ -109,7 +103,6 @@ def get_client_info(dhcp=False):
     ipv4_addr = None
     dns_name = []
     for i in tmp :
-
         if 'IPv6 位址. . . . . . . . . . . . .: ' in i:
             ipv6_addr = i.replace('IPv6 位址. . . . . . . . . . . . .: ','').replace('(偏好選項)','').replace(' ','')
         if 'IPv4 位址 . . . . . . . . . . . . : ' in i:
@@ -128,20 +121,23 @@ def get_client_info(dhcp=False):
 
 
 def main():
+    
     j = open(r'C:\config.json','r' , encoding="utf-8")
     j = json.loads(j.read())
     domain = j["domain"]
     requests_target = j["requests_target"]
     nic_name = j["nic_name"]
+    ipv6_addr = None
+    ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
     #domain = 'origin-direct.tanetcdn.edu.tw'
     #requests_target = 'https://origin-direct.tanetcdn.edu.tw/assets/images/Video.mp4'
     #dhcp test
-    ipv6_addr = None
     os.popen('netsh interface ip set dnsservers "'+nic_name+'"  dhcp')
-    os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'"  dhcp')
+    if ipv6_addr !=None:
+        os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'"  dhcp')
     time.sleep(5)   #buffer time
-    ipv6_addr , ipv4_addr ,  dns_ip = get_client_info(dhcp=True)
-    cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target , nic_name , ipv6_addr = ipv6_addr , dhcp=True)
+    ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
+    cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
     os.popen('ipconfig/flushdns')
     server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
     httping , download_speed  , test_type = cdn_tester_q.httping()
@@ -153,10 +149,14 @@ def main():
     for dns_name in j['dns'] :
         #domain =  "www.tanetcdn.edu.tw"
         #requests_target = "https://www.tanetcdn.edu.tw/assets/images/Video.mp4"
-        cdn_tester_q = cdn_tester(domain , dns_name['ipv4'] , requests_target , nic_name , ipv6_addr = ipv6_addr , ipv6 = dns_name['ipv6'])
+        os.popen('netsh interface ip set dnsservers "'+nic_name+'" static '+dns_name['ipv4']+' primary')
+        if ipv6_addr !=None:
+            os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+dns_name['ipv6']+' primary')
+        time.sleep(5)   #buffer time
+        ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
+        cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
         os.popen('ipconfig/flushdns')
         server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
-        ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
         httping , download_speed  , test_type = cdn_tester_q.httping()
         get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
                                                 server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
