@@ -132,9 +132,19 @@ def main():
     #domain = 'origin-direct.tanetcdn.edu.tw'
     #requests_target = 'https://origin-direct.tanetcdn.edu.tw/assets/images/Video.mp4'
     #dhcp test
-    os.popen('netsh interface ip set dnsservers "'+nic_name+'"  dhcp')
+    check = os.popen('netsh interface ip set dnsservers "'+nic_name+'"  dhcp')
+
     if ipv6_addr !=None:
         os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'"  dhcp')
+    check = check.read()
+    if '錯誤' in check :
+        print('網卡名稱錯誤')
+        input("按任意鍵結束")
+        quit()
+    if '權限' in check :
+        print('權限不足')
+        input("按任意鍵結束")
+        quit()
     time.sleep(5)   #buffer time
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
     cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
