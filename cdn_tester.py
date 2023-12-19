@@ -7,13 +7,13 @@ import json
 class cdn_tester:
     def __init__(self , domain , dns_ip , requests_target):
         self.domain = domain
-        self.dns = dns_ip
+        self.dns_ip = dns_ip
         self.requests_target = requests_target
 
     def dns_get_server_ip(self):
         
         resolver = dns.resolver.Resolver()
-        resolver.nameservers = [self.dns]
+        resolver.nameservers = [self.dns_ip]
         resolver.lifetime = 5.0
         #IPv6
         try:
@@ -70,9 +70,9 @@ class cdn_tester:
                 test_type = r.raw.connection.sock.getpeername()
                 test_type  = test_type[0]
                 if ":" in test_type :
-                    test_type = "IPv6"
+                    test_type = "IPv6 ("+test_type+")"
                 elif "." in test_type :
-                    test_type = "IPv4"
+                    test_type = "IPv4 ("+test_type+")"
                 else :
                     test_type = "None"
                 use_time = end_time - start_time
@@ -155,7 +155,7 @@ def main():
     httping , download_speed  , test_type = cdn_tester_q.httping()
     get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
                                             server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
-                                            test_type=test_type , httping = httping  , download_speed = download_speed , dhcp = True)
+                                            test_type=test_type , httping = httping  , download_speed = download_speed)
     #normal test
     
     for dns_name in j['dns'] :
