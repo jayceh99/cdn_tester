@@ -79,6 +79,8 @@ class cdn_tester:
                 httping_ms = str(int(((use_time)*1000))) +' ms'
             del r
             start_time = time.time()
+
+            
             r = requests.get(self.requests_target)
             end_time = time.time()
             
@@ -133,9 +135,7 @@ def main():
     #requests_target = 'https://origin-direct.tanetcdn.edu.tw/assets/images/Video.mp4'
     #dhcp test
     check = os.popen('netsh interface ip set dnsservers "'+nic_name+'"  dhcp')
-
-    if ipv6_addr !=None:
-        os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'"  dhcp')
+    os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'"  dhcp')
     check = check.read()
     if '錯誤' in check :
         print('網卡名稱有誤')
@@ -155,7 +155,7 @@ def main():
     httping , download_speed  , test_type = cdn_tester_q.httping()
     get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
                                             server_ipv6 = server_ipv6 , server_locationv6 = server_locationv6 , server_ipv4 = server_ipv4 , server_locationv4 = server_locationv4 , \
-                                            test_type=test_type , httping = httping  , download_speed = download_speed)
+                                            test_type=test_type , httping = httping  , download_speed = download_speed , dhcp=True)
     #normal test
     
     for dns_name in j['dns'] :
