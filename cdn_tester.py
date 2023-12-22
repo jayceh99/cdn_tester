@@ -151,11 +151,11 @@ def main():
     time.sleep(5)   #buffer time
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
     os.popen('ipconfig/flushdns')
-    #cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
-
+    cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
+    '''
     dns_tmp = '8.8.8.8'
     cdn_tester_q = cdn_tester(domain , dns_tmp , requests_target )
-    
+    '''
     server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
     httping , download_speed  , test_type = cdn_tester_q.httping()
     get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
