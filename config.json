@@ -1,14 +1,21 @@
 {
   "nic_name":"wifi",
-  "domain": "www.tanetcdn.edu.tw",
-  "requests_target": "https://www.tanetcdn.edu.tw",
+  "domain": "media.video.cloud.edu.tw",
+  "requests_target": "https://media.video.cloud.edu.tw/vod/_definst_/mp4:uploads.video/2019/12/video_354407_1080.mp4/segment_ctvideo_ridp0va0br4444619_cs1786770_w871332086_mpd.m4s" ,
+  "domain1": "www.tanetcdn.edu.tw",
+  "requests_target1": "https://www.tanetcdn.edu.tw/assets/images/Video.mp4",
+  "domain2": "proj.moe.edu.tw",
+  "requests_target2": "https://proj.moe.edu.tw/Images/icon-pic/away-w-left04.png",
   "dns": [
     {
-      "ip":"168.95.1.1"
+      "ipv4":"168.95.1.1",
+      "ipv6":"2001:b000:168::1"
+      
     },
     {
-      "ip":"163.28.6.1"
+      "ipv4":"140.111.233.5",
+      "ipv6":"2620:fe::11"
     }
     ]
-
 }
+
