@@ -16,6 +16,7 @@ class cdn_tester:
         resolver.nameservers = [self.dns_ip]
         resolver.lifetime = 5.0
         #IPv6
+
         try:
             answers = resolver.resolve(self.domain , 'AAAA')
             for data in answers:
@@ -58,16 +59,28 @@ class cdn_tester:
 
     def httping(self):
         try:
-            r = requests.get(self.requests_target , stream=True)
+            
+            #r = requests.get(self.requests_target , stream=True)
+            ##start_time = time.time()
+            #r = requests.get(self.requests_target , stream=True)
+            #end_time = time.time()
+            #print(end_time - start_time)
+            #print(r.status_code)
+            
+            r_ = requests.get(self.requests_target , stream=True)
             start_time = time.time()
-            r = requests.get(self.requests_target , stream=True)
+            r = requests.head(self.requests_target )
             end_time = time.time()
+
+            
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
                 httping_ms = "Test Failed"
                 test_type = "None"
+            
             else:
 
-                test_type = r.raw.connection.sock.getpeername()
+                
+                test_type = r_.raw.connection.sock.getpeername()
                 test_type  = test_type[0]
                 if ":" in test_type :
                     test_type = "IPv6 ("+test_type+")"
@@ -77,10 +90,10 @@ class cdn_tester:
                     test_type = "None"
                 use_time = end_time - start_time
                 httping_ms = str(int(((use_time)*1000))) +' ms'
-            del r
-            start_time = time.time()
-
             
+            del r
+            r = requests.get(self.requests_target)
+            start_time = time.time()
             r = requests.get(self.requests_target)
             end_time = time.time()
             
@@ -91,8 +104,12 @@ class cdn_tester:
                 use_time = end_time - start_time
                 download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')+" Mbps"
 
+
+
+
             return httping_ms , download_speed , test_type
-        except :
+        except  Exception as e:
+        #    print(e)
             return "Test Failed" , "Test Failed" , "Test Failed"
         
 
@@ -105,9 +122,9 @@ def get_client_info():
     ipv4_addr = None
     dns_name = []
     for i in tmp :
-        if 'IPv6 位址. . . . . . . . . . . . .: ' in i:
+        if 'IPv6 位址. . . . . . . . . . . . .: ' in i and ipv6_addr == None:
             ipv6_addr = i.replace('IPv6 位址. . . . . . . . . . . . .: ','').replace('(偏好選項)','').replace(' ','')
-        if 'IPv4 位址 . . . . . . . . . . . . : ' in i:
+        if 'IPv4 位址 . . . . . . . . . . . . : ' in i and ipv4_addr == None:
             ipv4_addr = i.replace('IPv4 位址 . . . . . . . . . . . . : ','').replace('(偏好選項)','').replace(' ','')
         if 'DNS 伺服器 . . . . . . . . . . . .' in i:
             i = i.replace('DNS 伺服器 . . . . . . . . . . . .: ' , '').replace(' ','')
@@ -152,10 +169,9 @@ def main():
     ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
     os.popen('ipconfig/flushdns')
     cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
-    '''
-    dns_tmp = '8.8.8.8'
-    cdn_tester_q = cdn_tester(domain , dns_tmp , requests_target )
-    '''
+
+
+
     server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
     httping , download_speed  , test_type = cdn_tester_q.httping()
     get_server_info.get_server_organization(ipv6_addr = ipv6_addr , ipv4_addr = ipv4_addr  , dns_ip = dns_ip , domain = domain , \
@@ -163,12 +179,16 @@ def main():
                                             test_type=test_type , httping = httping  , download_speed = download_speed , dhcp=True)
     #normal test
     
+
+
     for dns_name in j['dns'] :
         #domain =  "www.tanetcdn.edu.tw"
         #requests_target = "https://www.tanetcdn.edu.tw/assets/images/Video.mp4"
         os.popen('netsh interface ip set dnsservers "'+nic_name+'" static '+dns_name['ipv4']+' primary')
+        
         if ipv6_addr != None :
             os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+dns_name['ipv6']+' primary')   
+        
         time.sleep(5)   #buffer time
         os.popen('ipconfig/flushdns')
         ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
