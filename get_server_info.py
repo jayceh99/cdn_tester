@@ -11,14 +11,14 @@ def get_server_organization(ipv6_addr , ipv4_addr  , dns_ip , domain , server_ip
         try:
             keyv6 , valuev6 = tanetwhois(server_ipv6 , server_locationv6)
         except Exception:
-            keyv6 , valuev6 = "Chinese Name" , ""
+            keyv6 , valuev6 = "Chinese Name" , "非學術網路IP Address"
     if server_ipv4 == "NoAnswer" :
         keyv4 , valuev4 = "Chinese Name" , "NoAnswer" 
     else:
         try:
             keyv4 , valuev4 = tanetwhois(server_ipv4 , server_locationv4)
         except Exception:
-            keyv4 , valuev4 = "Chinese Name" , "NoAnswer"
+            keyv4 , valuev4 = "Chinese Name" , "非學術網路IP Address"
     i = 1
     tb = pt.PrettyTable()
     tb.field_names = ['Key','Value']
