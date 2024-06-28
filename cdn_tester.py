@@ -76,7 +76,7 @@ class cdn_tester:
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
                 httping_ms = "Test Failed"
                 test_type = "None"
-            
+                print(r.status_code)
             else:
 
                 
@@ -100,6 +100,7 @@ class cdn_tester:
             if r.status_code / 100 == 4.0 or r.status_code / 100 == 5.0:
                 download_speed = "Test Failed"
                 test_type = "None"
+                print(r.status_code)
             else:
                 use_time = end_time - start_time
                 download_speed = format(int(r.headers.get("Content-Length")) * 8 / 1024 / 1024 / use_time , '.2f')+" Mbps"
@@ -109,8 +110,9 @@ class cdn_tester:
 
             return httping_ms , download_speed , test_type
         except  Exception as e:
-        #    print(e)
+            #print(e)
             return "Test Failed" , "Test Failed" , "Test Failed"
+            
         
 
 
@@ -186,8 +188,8 @@ def main():
         #requests_target = "https://www.tanetcdn.edu.tw/assets/images/Video.mp4"
         os.popen('netsh interface ip set dnsservers "'+nic_name+'" static '+dns_name['ipv4']+' primary')
         
-        if ipv6_addr != None :
-            os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+dns_name['ipv6']+' primary')   
+        #if ipv6_addr != None :
+        #    os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+dns_name['ipv6']+' primary')   
         
         time.sleep(5)   #buffer time
         os.popen('ipconfig/flushdns')
@@ -217,6 +219,10 @@ def test():
     print(server_ipv6)
 
 if __name__ == '__main__':
-    main()
-    input("按任意鍵結束")
+    try:
+        main()
+        input("按任意鍵結束")
+    except Exception as e :
+        print(e)
+        input('按任意鍵結束')
     #test()
