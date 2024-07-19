@@ -188,12 +188,19 @@ def main():
         #requests_target = "https://www.tanetcdn.edu.tw/assets/images/Video.mp4"
         os.popen('netsh interface ip set dnsservers "'+nic_name+'" static '+dns_name['ipv4']+' primary')
         
-        #if ipv6_addr != None :
-        #    os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+dns_name['ipv6']+' primary')   
+
+        ####IPv6 DNS select
+        if ipv6_addr != None :
+            os.popen('netsh interface ipv6 set dnsservers "'+nic_name+'" static '+dns_name['ipv6']+' primary')   
         
+
+
+
         time.sleep(5)   #buffer time
         os.popen('ipconfig/flushdns')
         ipv6_addr , ipv4_addr ,  dns_ip = get_client_info()
+        
+
         cdn_tester_q = cdn_tester(domain , dns_ip[0] , requests_target )
         server_ipv6 , server_locationv6 , server_ipv4 , server_locationv4 = cdn_tester_q.dns_get_server_ip()
         httping , download_speed  , test_type = cdn_tester_q.httping()
